@@ -1,15 +1,13 @@
 // ==UserScript==
 // @name          Undiscord - Delete all messages in a Discord channel or DM (Bulk deletion)
 // @description   Extends the discord interface so you can mass delete messages from discord
-// @namespace     https://github.com/victornpb/deleteDiscordMessages
+// @namespace     https://github.com/VictorienXP/deleteDiscordMessages/tree/my-raspberry-pi-has-a-stroke
 // @version       4.2
 // @match         https://discord.com/*
 // @match         https://ptb.discord.com/*
 // @match         https://canary.discord.com/*
-// @downloadURL   https://raw.githubusercontent.com/victornpb/deleteDiscordMessages/master/deleteDiscordMessages.user.js
-// @homepageURL   https://github.com/victornpb/deleteDiscordMessages
-// @supportURL    https://github.com/victornpb/deleteDiscordMessages/issues
-// @contributionURL https://www.buymeacoffee.com/vitim
+// @downloadURL   https://raw.githubusercontent.com/VictorienXP/deleteDiscordMessages/my-raspberry-pi-has-a-stroke/deleteDiscordMessages.user.js
+// @homepageURL   https://github.com/VictorienXP/deleteDiscordMessages/tree/my-raspberry-pi-has-a-stroke
 // @grant         none
 // @license       MIT
 // ==/UserScript==
@@ -141,9 +139,9 @@ async function deleteMessages(authToken, authorId, guildId, channelId, minId, ma
         }
 
         const etr = msToHMS((searchDelay * Math.round(total / 25)) + ((deleteDelay + avgPing) * total));
-        log.info(`Total messages found: ${data.total_results}`, `(Messages in current page: ${data.messages.length}, To be deleted: ${messagesToDelete.length}, System: ${skippedMessages.length})`, `offset: ${offset}`);
-        printDelayStats();
-        log.verb(`Estimated time remaining: ${etr}`)
+        //log.info(`Total messages found: ${data.total_results}`, `(Messages in current page: ${data.messages.length}, To be deleted: ${messagesToDelete.length}, System: ${skippedMessages.length})`, `offset: ${offset}`);
+        //printDelayStats();
+        //log.verb(`Estimated time remaining: ${etr}`)
 
 
         if (messagesToDelete.length > 0) {
@@ -160,10 +158,10 @@ async function deleteMessages(authToken, authorId, guildId, channelId, minId, ma
                 const message = messagesToDelete[i];
                 if (stopHndl && stopHndl() === false) return end(log.error('Stopped by you!'));
 
-                log.debug(`${((delCount + 1) / grandTotal * 100).toFixed(2)}% (${delCount + 1}/${grandTotal})`,
+                /*log.debug(`${((delCount + 1) / grandTotal * 100).toFixed(2)}% (${delCount + 1}/${grandTotal})`,
                     `Deleting ID:${redact(message.id)} <b>${redact(message.author.username + '#' + message.author.discriminator)} <small>(${redact(new Date(message.timestamp).toLocaleString())})</small>:</b> <i>${redact(message.content).replace(/\n/g, '↵')}</i>`,
-                    message.attachments.length ? redact(JSON.stringify(message.attachments)) : '');
-                if (onProgress) onProgress(delCount + 1, grandTotal);
+                    message.attachments.length ? redact(JSON.stringify(message.attachments)) : '');*/
+                if (onProgress) onProgress(delCount + 1, grandTotal, lastPing, avgPing, etr);
 
                 let resp;
                 try {
@@ -210,7 +208,7 @@ async function deleteMessages(authToken, authorId, guildId, channelId, minId, ma
                 log.verb(`Found ${skippedMessages.length} system messages! Decreasing grandTotal to ${grandTotal} and increasing offset to ${offset}.`);
             }
 
-            log.verb(`Searching next messages in ${searchDelay}ms...`, (offset ? `(offset: ${offset})` : ''));
+            //log.verb(`Searching next messages in ${searchDelay}ms...`, (offset ? `(offset: ${offset})` : ''));
             await wait(searchDelay);
 
             if (stopHndl && stopHndl() === false) return end(log.error('Stopped by you!'));
@@ -314,7 +312,7 @@ function initUI() {
                 <span>Delete Delay <a
                 href="https://github.com/victornpb/deleteDiscordMessages/blob/master/help/delay.md" title="Help"
                 target="_blank">?</a><br>
-                    <input id="deleteDelay" type="number" value="1000" step="100">
+                    <input id="deleteDelay" type="number" value="4200" step="100">
                 </span>
             </div>
             <hr>
@@ -322,8 +320,7 @@ function initUI() {
             <button id="stop" style="background:#f04747;width:80px;" disabled>Stop</button>
             <button id="clear" style="width:80px;">Clear log</button>
             <label><input id="autoScroll" type="checkbox" checked>Auto scroll</label>
-            <label title="Hide sensitive information for taking screenshots"><input id="redact" type="checkbox">Screenshot
-                mode</label>
+            <label title="Hide sensitive information for taking screenshots"><input id="redact" type="checkbox">Hide info</label>
             <progress id="progress" style="display:none;"></progress> <span class="percent"></span>
         </div>
         <pre class="logarea">
@@ -409,7 +406,7 @@ function initUI() {
 
         const stopHndl = () => !(stop === true);
 
-        const onProg = (value, max) => {
+        const onProg = (value, max, lastPing, avgPing, etr) => {
             if (value && max && value > max) max = value;
             progress.setAttribute('max', max);
             progress.value = value;
@@ -417,7 +414,7 @@ function initUI() {
             progress2.setAttribute('max', max);
             progress2.value = value;
             progress2.style.display = max ? '' : 'none';
-            percent.innerHTML = value && max ? Math.round(value / max * 100) + '%' : '';
+            percent.innerHTML = value && max ? (value / max * 100).toFixed(2) + `% (${value}/${max}). Ping-Avg: ${lastPing | '?'}-${avgPing | '?'}ms. Est: ${etr}` : '';
         };
 
 
